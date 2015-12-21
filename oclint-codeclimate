@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+
+# Copyright 2015 Ryuichi Saito, LLC
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import os
+import platform
+import json
+import re
+import subprocess
+import sys
+
+OCLINT_BIN_FOLDER = os.path.dirname(os.path.abspath(__file__))
+OCLINT_BIN = OCLINT_BIN_FOLDER + os.sep + "oclint"
+CURRENT_WORKING_DIRECTORY = os.getcwd()
+JSON_COMPILATION_DATABASE = CURRENT_WORKING_DIRECTORY + os.sep + "compile_commands.json"
+CODECLIMATE_CONFIG_JSON = CURRENT_WORKING_DIRECTORY + os.sep + "config.json"
+
+with open(CODECLIMATE_CONFIG_JSON) as config_json:
+    config = json.load(config_json)
+    commands = config["commands"]
+    includes = config["include_paths"]
+
+    build_command = " && ".join(commands)
+
+    exit_code = subprocess.call(build_command, shell=True)
+
+    if exit_code != 0:
+        print "Couldn't execute commands successfully"
+        sys.exit(exit_code)
+
+    if not os.path.isfile(JSON_COMPILATION_DATABASE):
+        print "compile_commands.json file cannot be found"
+        sys.exit(-1)
+
+    for include in includes:
+        oclint_command = [OCLINT_BIN, '-report-type=json', include]
+        oclint_proc = subprocess.Popen(oclint_command, stdout=subprocess.PIPE)
+        oclint_json_output = oclint_proc.stdout
+
+        oclint_json = json.load(oclint_json_output)
+        oclint_violations = oclint_json["violation"]
+
+        for violation in oclint_violations:
+            codeclimate_issue = {}
+            codeclimate_issue["type"] = "issue"
+            codeclimate_issue["check_name"] = violation["rule"]
+            codeclimate_issue["description"] = violation["message"]
+            codeclimate_issue["categories"] = ["TODO"] # TODO: oclint needs to expose this
+            violation_priority = violation["priority"]
+            if violation_priority == 1:
+                codeclimate_issue["severity"] = "critical"
+            if violation_priority == 1:
+                codeclimate_issue["severity"] = "normal"
+            if violation_priority == 1:
+                codeclimate_issue["severity"] = "info" #TODO: need to revise the text
+            codeclimate_issue["location"] = {
+                "path": violation["path"],
+                "positions": {
+                    "begin": {
+                        "line": violation["startLine"],
+                        "column": violation["startColumn"]
+                    },
+                    "end": {
+                        "line": violation["endLine"],
+                        "column": violation["endColumn"]
+                    }
+                }
+            }
+            print json.dumps(codeclimate_issue)

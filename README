@@ -1,0 +1,7 @@
+oclint-codeclimate
+-------------------------------------------------------------------------------
+
+oclint-codeclimate reads from Code Climate config.json file, invoke OCLint for
+analysis, and finally, convert the result into Code Climate issue json format.
+
+This is still working in progress.
