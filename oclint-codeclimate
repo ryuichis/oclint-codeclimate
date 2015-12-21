@@ -34,14 +34,14 @@ with open(CODECLIMATE_CONFIG_JSON) as config_json:
 
     build_command = " && ".join(commands)
 
-    exit_code = subprocess.call(build_command, shell=True)
+    exit_code = subprocess.call(build_command, shell=True) # TODO: pipe to null
 
     if exit_code != 0:
-        print "Couldn't execute commands successfully"
+        print "Couldn't execute commands successfully" # pipe to stderr
         sys.exit(exit_code)
 
     if not os.path.isfile(JSON_COMPILATION_DATABASE):
-        print "compile_commands.json file cannot be found"
+        print "compile_commands.json file cannot be found" # pipe to stderr
         sys.exit(-1)
 
     for include in includes:
@@ -61,9 +61,9 @@ with open(CODECLIMATE_CONFIG_JSON) as config_json:
             violation_priority = violation["priority"]
             if violation_priority == 1:
                 codeclimate_issue["severity"] = "critical"
-            if violation_priority == 1:
+            if violation_priority == 2:
                 codeclimate_issue["severity"] = "normal"
-            if violation_priority == 1:
+            if violation_priority == 3:
                 codeclimate_issue["severity"] = "info" #TODO: need to revise the text
             codeclimate_issue["location"] = {
                 "path": violation["path"],
