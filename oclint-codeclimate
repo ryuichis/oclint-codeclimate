@@ -57,14 +57,14 @@ with open(CODECLIMATE_CONFIG_JSON) as config_json:
             codeclimate_issue["type"] = "issue"
             codeclimate_issue["check_name"] = violation["rule"]
             codeclimate_issue["description"] = violation["message"]
-            codeclimate_issue["categories"] = ["TODO"] # TODO: oclint needs to expose this
+            codeclimate_issue["categories"] = [violation["category"]]
             violation_priority = violation["priority"]
             if violation_priority == 1:
                 codeclimate_issue["severity"] = "critical"
             if violation_priority == 2:
                 codeclimate_issue["severity"] = "normal"
             if violation_priority == 3:
-                codeclimate_issue["severity"] = "info" #TODO: need to revise the text
+                codeclimate_issue["severity"] = "info"
             codeclimate_issue["location"] = {
                 "path": violation["path"],
                 "positions": {
