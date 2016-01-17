@@ -27,6 +27,8 @@ CURRENT_WORKING_DIRECTORY = os.getcwd()
 JSON_COMPILATION_DATABASE = CURRENT_WORKING_DIRECTORY + os.sep + "compile_commands.json"
 CODECLIMATE_CONFIG_JSON = CURRENT_WORKING_DIRECTORY + os.sep + "config.json"
 
+FNULL = open(os.devnull, 'w')
+
 with open(CODECLIMATE_CONFIG_JSON) as config_json:
     config = json.load(config_json)
     includes = config["include_paths"]
@@ -41,17 +43,18 @@ with open(CODECLIMATE_CONFIG_JSON) as config_json:
         commands = config["commands"]
     else:
         sys.stderr.write("Broken configuration file\n")
+        sys.exit(-1)
 
     build_command = " && ".join(commands)
 
-    exit_code = subprocess.call(build_command, shell=True) # TODO: pipe to null
+    exit_code = subprocess.call(build_command, stdout=FNULL, stderr=FNULL, shell=True)
 
     if exit_code != 0:
-        print "Couldn't execute commands successfully" # pipe to stderr
+        sys.stderr.write("Couldn't execute commands successfully\n")
         sys.exit(exit_code)
 
     if not os.path.isfile(JSON_COMPILATION_DATABASE):
-        print "compile_commands.json file cannot be found" # pipe to stderr
+        sys.stderr.write("compile_commands.json file cannot be found\n")
         sys.exit(-1)
 
     for include in includes:
