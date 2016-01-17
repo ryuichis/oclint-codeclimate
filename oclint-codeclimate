@@ -29,8 +29,18 @@ CODECLIMATE_CONFIG_JSON = CURRENT_WORKING_DIRECTORY + os.sep + "config.json"
 
 with open(CODECLIMATE_CONFIG_JSON) as config_json:
     config = json.load(config_json)
-    commands = config["commands"]
     includes = config["include_paths"]
+
+    if "build_tool" in config and not "commands" in config:
+        build_tool = config["build_tool"]
+        if build_tool == "make":
+            commands = ["./configure", "bear make"]
+        elif build_tool == "cmake":
+            commands = ["mkdir build", "cd build", "cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..", "cd ..", "mv build/compile_commands.json ."]
+    elif "commands" in config:
+        commands = config["commands"]
+    else:
+        sys.stderr.write("Broken configuration file\n")
 
     build_command = " && ".join(commands)
 
